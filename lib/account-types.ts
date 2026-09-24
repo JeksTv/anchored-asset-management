@@ -1,0 +1,1 @@
+export type AccountRequest={id:string;employee_id:string;provider:string;username:string;services:string;requester:string;source:string;purpose:string;reference:string;status:string;review_note:string;created_at:string;updated_at:string};

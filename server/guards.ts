@@ -1,0 +1,2 @@
+import {checkOrigin,requireRole,failure,audit} from './auth.mjs';
+export function protect(handler:(request:Request)=>Promise<Response>,roles=['super_admin','admin']){return async(request:Request)=>{try{const user=requireRole(request,roles);if(request.method!=='GET')checkOrigin(request);const response=await handler(request);response.headers.set('Cache-Control','no-store');if(request.method!=='GET'&&response.ok)audit(user.id,request.method+':'+new URL(request.url).pathname,null);return response}catch(e){return failure(e)}}}

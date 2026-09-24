@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1788619990353,
+      "tag": "0000_sleepy_preak",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1788621517724,
+      "tag": "0001_motionless_nightcrawler",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788622864038,
+      "tag": "0002_glorious_randall_flagg",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1788666677567,
+      "tag": "0003_nervous_misty_knight",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1788685722351,
+      "tag": "0004_open_hammerhead",
+      "breakpoints": true
+    }
+  ]
+}
