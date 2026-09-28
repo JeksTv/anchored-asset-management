@@ -1,0 +1,18 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {execFileSync} from 'node:child_process';
+import QRCode from 'qrcode';
+process.env.DATA_DIR=mkdtempSync(join(tmpdir(),'verification-'));
+execFileSync(process.execPath,['scripts/migrate.mjs']);
+const {connection:db}=await import('../server/database.mjs');
+const {saveVerification}=await import('../server/asset-verification.mjs');
+const actor={id:'it',name:'IT Admin',role:'admin'};
+db.prepare("INSERT INTO assets(id,tag,name,kind,serial,seats,state,details) VALUES('a','LT001','Laptop','Hardware','S1',1,'Ready',?)").run(JSON.stringify({condition:'Good',location:'IT storage'}));
+const b={action:'inspect',assetId:'a',serial:'S1',custodian:'',location:'IT storage',condition:'Good',notes:''};
+test('matched inspection preserves inventory and snapshot',()=>{const {id}=saveVerification(b,actor);const r=db.prepare('SELECT * FROM asset_verifications WHERE id=?').get(id);assert.equal(r.status,'Verified');assert.equal(JSON.parse(r.expected).serial,'S1');assert.equal(db.prepare('SELECT state FROM assets').get().state,'Ready')});
+test('mismatch stays open until documented resolution, without rewriting evidence',()=>{const {id}=saveVerification({...b,serial:'S2'},actor);const r=db.prepare('SELECT * FROM asset_verifications WHERE id=?').get(id);assert.equal(r.status,'Open');assert.throws(()=>saveVerification({action:'resolve',id,resolution:''},actor));saveVerification({action:'resolve',id,resolution:'Confirmed transcription issue; asset correction recorded separately.'},actor);const after=db.prepare('SELECT * FROM asset_verifications WHERE id=?').get(id);assert.equal(after.status,'Resolved');assert.equal(after.expected,r.expected);assert.equal(after.observed,r.observed);assert.equal(db.prepare('SELECT serial FROM assets').get().serial,'S1');assert.throws(()=>saveVerification({action:'resolve',id,resolution:'Again'},actor))});
+test('unauthorized and invalid records rejected atomically',()=>{const n=db.prepare('SELECT count(*) n FROM asset_verifications').get().n;assert.throws(()=>saveVerification(b,{role:'user'}));assert.throws(()=>saveVerification({...b,location:''},actor));assert.throws(()=>saveVerification({...b,assetId:'missing'},actor));assert.equal(db.prepare('SELECT count(*) n FROM asset_verifications').get().n,n);assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[])});
+test('QR encoder creates printable SVG for protected asset link',async()=>{const svg=await QRCode.toString('https://assets.example.com/?inspect=a',{type:'svg',margin:4});assert.match(svg,/<svg/);assert.match(svg,/viewBox/)});

@@ -96,3 +96,73 @@
 .account-menu-content [data-slot="dropdown-menu-label"]{padding:12px;overflow-wrap:anywhere}
 .account-menu-content small{display:block;margin-top:4px;text-transform:capitalize}
 @media(max-width:380px){.access-bar{gap:8px;padding-inline:12px}.access-bar .anchored-logo-header{width:96px}.access-bar > strong{font-size:12px}}
+
+.record-management input[type="checkbox"]{width:auto;min-width:18px;min-height:18px;margin-right:6px;vertical-align:middle}
+.record-management .access-table td button{margin:2px 8px 2px 0}
+.test-cleanup-preview{padding:12px;border:1px solid #d8e0e2;border-radius:8px;margin:12px 0;overflow-wrap:anywhere}
+.test-cleanup-preview ul{padding-left:22px;margin:8px 0}
+
+/* Provisioning: identify hardware by control number before its model/name. */
+.asset-choice-trigger[data-slot="select-trigger"] { width: 100%; min-width: 0; height: auto; min-height: 44px; white-space: normal; }
+.asset-choice-trigger [data-slot="select-value"] { min-width: 0; white-space: normal; overflow-wrap: anywhere; -webkit-line-clamp: unset; }
+.asset-choice-options[data-slot="select-content"] { max-width: calc(100vw - 32px); }
+.asset-choice-options [data-slot="select-item"] { min-height: 44px; align-items: flex-start; }
+.asset-choice-options [data-slot="select-item"] > span { min-width: 0; flex-shrink: 1; white-space: normal; overflow-wrap: anywhere; }
+
+/* Desktop branding belongs to the sidebar; keep one logo at each breakpoint. */
+.anchored-sidebar-brand {align-items:center;gap:10px;padding:20px 16px 18px;}
+.anchored-sidebar-brand > span {display:block;width:100%;margin:0;text-align:center;line-height:1.4;letter-spacing:.06em;}
+@media (min-width:768px) {
+ .workspace-account-bar > .anchored-logo-header,
+ .workspace-account-bar > strong {display:none;}
+}
+@media (max-width:767px) {
+ .anchored-sidebar-brand {display:none;}
+}
+
+/* A restrained brand lockup with clear separation from navigation. */
+[data-slot="sidebar-header"] {gap:0;padding:0;}
+.anchored-sidebar-brand {
+  margin:0 20px;padding:24px 0 20px;gap:8px;
+  border-bottom:1px solid #e7ebef;
+}
+.anchored-sidebar-brand .anchored-logo-sidebar {
+  width:100%;max-width:204px;object-fit:contain;
+}
+.anchored-sidebar-brand > span {
+  font-size:12px;font-weight:500;line-height:1.5;
+  letter-spacing:.035em;color:#475569;
+}
+[data-slot="sidebar-header"] .workspace {
+  margin:0;padding:20px 24px 10px;font-size:10px;
+  font-weight:600;line-height:1.4;letter-spacing:.13em;color:#7b8794;
+}
+@media (max-width:767px) {
+  [data-slot="sidebar-header"] .workspace {padding-top:22px;padding-right:54px;}
+}
+
+/* One compact workspace toolbar, with account controls aligned to breadcrumbs. */
+.access-bar {background:#fff;color:#243746;border-bottom:1px solid #e5eaee;}
+.access-bar .account-menu-trigger {color:#526571;background:#fff;border:1px solid #dbe3e8;border-radius:8px;}
+.access-bar .account-menu-trigger:hover,
+.access-bar .account-menu-trigger:focus-visible {background:#f1f6f5;color:#08796b;outline-color:#9bc8bf;}
+@media (min-width:768px) {
+ .workspace-account-bar {position:absolute;top:10px;right:24px;z-index:30;padding:0;min-height:44px;height:44px;border:0;background:transparent;}
+ .topbar {min-height:64px;padding:10px 92px 10px 28px;background:#fff;border-bottom:1px solid #e5eaee;gap:16px;font-size:13px;}
+ .topbar .private {font-size:11px;color:#71808b;}
+}
+@media (max-width:767px) {
+ .access-bar {padding:8px 16px;}
+ .topbar {min-height:48px;padding-block:4px;font-size:12px;}
+}
+
+/* Employee profile: compact identity and task-focused sections. */
+.employee-profile-body .detail-meta{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;padding:18px;background:var(--muted);border:1px solid var(--border);border-radius:10px;margin:12px 0 20px}
+.employee-profile-nav{display:flex!important;width:100%;height:auto!important;flex-wrap:wrap;justify-content:flex-start;gap:6px;padding:6px!important;background:var(--muted);border-radius:10px}
+.employee-profile-nav [role=tab]{flex:0 1 auto;padding:10px 12px!important;min-height:42px;white-space:normal;text-align:center}
+.employee-profile-nav [data-state=active]{box-shadow:inset 0 -2px var(--anchored-gold);color:var(--foreground);background:var(--card)}
+.employee-profile-body .provisioned-panel{margin-top:18px;padding:18px}
+.profile-arrangement{border:1px solid var(--border);border-radius:9px;padding:14px;margin:16px 0}
+.profile-arrangement>summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--foreground)}
+.employee-profile-body .detail-actions{margin:16px 0}
+@media(max-width:600px){.employee-profile-nav [role=tab]{flex:1 1 44%;font-size:12px}.employee-profile-body .detail-meta{grid-template-columns:1fr}.employee-profile-body .provisioned-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}

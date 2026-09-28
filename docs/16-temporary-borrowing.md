@@ -44,3 +44,7 @@ Back up the database first, then run `npm run db:migrate` before starting update
 Before rollout, IT should perform acceptance with a designated test employee and test hardware, print and sign a form, attach it, then exercise release and partial/final return. Check the company retention policy and train operators not to clear missing accessories.
 
 Final automated results: TypeScript check and production build passed; 18 service/security tests and 118 HTTP checks passed. The tracker had no page-wide horizontal overflow at 390px.
+
+## Summary location
+
+The overdue, due-today and reservation summary appears at the top of Temporary borrowing instead of Overview. View borrowing tracker scrolls to the tracker directly below it.

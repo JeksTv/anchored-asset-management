@@ -886,10 +886,11 @@ export function LaptopArrangements({
         : choice === 'Personal laptop'
           ? r?.personal_use === 'Yes'
           : choice === 'Needs review'
-            ? !company(e.id).length ||
-              !r ||
+            ? !r ||
               r.personal_use === 'Unknown' ||
-              r.loan_status === 'Unknown'
+              r.loan_status === 'Unknown' ||
+              (!company(e.id).length && r.personal_use !== 'Yes' &&
+                !['Active', 'Completed'].includes(r.loan_status))
             : true;
   };
   const rows = scope.filter(
@@ -919,6 +920,7 @@ export function LaptopArrangements({
       </p>
       {!fixedEmployee && (
         <>
+          <p className="notice"><strong>{laptops.length} laptops in Asset Inventory</strong> — includes deployed, available, reserved, borrowed, maintenance and retired equipment. The cards below count employees, not devices. Each employee is counted once per category; categories can overlap.</p>
           <div className="inventory-section-stats">
             {[
               'All employees',
@@ -935,8 +937,8 @@ export function LaptopArrangements({
                   setPage(1);
                 }}
               >
-                <span>{label}</span>
-                <strong>{scope.filter((e) => matches(e, label)).length}</strong>
+                <span>{label === 'Company laptop' ? 'Employees with company laptops' : label === 'Gadget loan' ? 'Employees with gadget loans' : label === 'Personal laptop' ? 'Employees using personal laptops' : label === 'Needs review' ? 'Employees needing review' : label}</span>
+                <strong>{scope.filter((e) => matches(e, label)).length}</strong><small>employees</small>
               </button>
             ))}
           </div>
@@ -965,8 +967,8 @@ export function LaptopArrangements({
           </div>
           <p>
             Gadget loan includes Active and Completed loans. Needs review
-            includes employees without a linked company laptop or with
-            unrecorded personal/loan details. {unlinked.length} laptop(s) have
+            includes employees with unrecorded personal/loan details or without
+            a company laptop, confirmed personal laptop, or active/completed gadget loan. {unlinked.length} laptop(s) have
             source custody without an employee link and are excluded from
             employee counts.
           </p>
@@ -1028,7 +1030,7 @@ export function LaptopArrangements({
                             </small>
                           </div>
                         ))
-                      : 'None linked'}
+                      : 'No company laptop assigned'}
                   </td>
                   <td>
                     {!r || r.loan_status === 'Unknown'

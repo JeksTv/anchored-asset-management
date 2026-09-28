@@ -1,0 +1,52 @@
+/* AnchorEd: navy for actions and typography; gold for selected accents. */
+:root {
+ --anchored-navy:#0b103e;
+ --anchored-navy-hover:#202955;
+ --anchored-gold:#c6a35b;
+ --anchored-gold-ink:#796029;
+ --background:#f5f6fa; --foreground:#253047;
+ --card:#ffffff; --card-foreground:#253047;
+ --popover:#ffffff; --popover-foreground:#253047;
+ --primary:var(--anchored-navy); --primary-foreground:#ffffff;
+ --secondary:#f0f2f8; --secondary-foreground:var(--anchored-navy);
+ --muted:#f0f2f7; --muted-foreground:#667085;
+ --accent:#f7f1e4; --accent-foreground:var(--anchored-navy);
+ --border:#e1e5ed; --input:#d4dae5; --ring:#947338;
+ --sidebar:#ffffff; --sidebar-foreground:#4e5870;
+ --sidebar-primary:var(--anchored-navy); --sidebar-primary-foreground:#fff;
+ --sidebar-accent:#f7f1e4; --sidebar-accent-foreground:var(--anchored-navy);
+ --sidebar-border:#e1e5ed; --sidebar-ring:#947338;
+ --chart-1:#0b103e; --chart-2:#c6a35b; --chart-3:#67749f; --chart-4:#947338; --chart-5:#aeb8d0;
+}
+body,.main,.content {background:var(--background);color:var(--foreground);}
+h1,h2,h3,.stat strong,.inventory-section-stats strong {color:var(--anchored-navy);}
+.primary {background:var(--anchored-navy);border-color:var(--anchored-navy);color:#fff;}
+.primary:hover:not(:disabled) {background:var(--anchored-navy-hover);border-color:var(--anchored-navy-hover);}
+.secondary {color:var(--anchored-navy);border-color:var(--input);background:#fff;}
+.secondary:hover:not(:disabled) {background:var(--secondary);border-color:#aeb8d0;}
+.nav {color:#59637a;}
+.nav:hover {background:#f3f4f9;color:var(--anchored-navy);}
+.nav.active {background:var(--accent);color:var(--anchored-navy);box-shadow:inset 3px 0 0 var(--anchored-gold);}
+.row-link {color:#26376d;}
+.row-link:hover {color:var(--anchored-navy);text-decoration:underline;}
+.avatar {background:#eef0f8;color:var(--anchored-navy);}
+.stat svg,.workflow-card svg,.welcome-icon,.empty svg {color:#66749b;}
+.anchored-sidebar-brand {border-bottom-color:#e5ddca;}
+.anchored-sidebar-brand > span {color:#4c5471;}
+.eyebrow {color:#77633d;}
+.inventory-section-stats button[aria-pressed="true"] {background:#faf5e9;border-color:var(--anchored-gold);box-shadow:inset 0 0 0 1px var(--anchored-gold);}
+.inventory-section-stats button:hover {border-color:#aeb8d0;}
+.inventory-section-heading select {border-color:#b3bcd0;color:var(--anchored-navy);}
+.list-pagination [aria-current="page"] {background:var(--accent);border-color:var(--anchored-gold);color:var(--anchored-navy);}
+.access-screen {background:linear-gradient(145deg,#eef0f8,#faf7ef);}
+.access-card {border-top:3px solid var(--anchored-gold);box-shadow:0 16px 48px #0b103e0d;}
+.access-bar .account-menu-trigger {color:var(--anchored-navy);border-color:var(--input);}
+.access-bar .account-menu-trigger:hover,.access-bar .account-menu-trigger:focus-visible {background:var(--accent);color:var(--anchored-navy);outline-color:var(--anchored-gold);}
+input[type="checkbox"],input[type="radio"] {accent-color:var(--anchored-navy);}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible {outline:2px solid var(--ring);outline-offset:3px;}
+/* Status badges retain their operational colors: success, warning and error. */
+
+/* Sign-in branding: one centered logo/title group. */
+.access-card .login-brand {display:flex;flex-direction:column;align-items:center;gap:0;margin-bottom:22px;text-align:center;}
+.access-card .login-brand .anchored-logo-login {margin:0;width:100%;max-width:340px;}
+.access-card .login-brand h1 {margin:-8px 0 0;width:100%;font-size:clamp(20px,4vw,26px);font-weight:600;line-height:1.3;letter-spacing:-.02em;text-align:center;}

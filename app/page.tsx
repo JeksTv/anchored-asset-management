@@ -1,4 +1,10 @@
-'use client';
+'use client';
+import {LifecycleHistory} from '@/components/lifecycle-history';
+import {EditEmployee} from '@/components/edit-employee';
+import {provisionedItems} from '@/lib/provisioned-items';
+import {AuditReports} from '@/components/audit-reports';
+import {BrandLogo} from '@/components/brand-logo';
+import {MovementHistory} from '@/components/movement-history';
 import { RecordManagement } from '@/components/record-management';
 
 import {WorkspaceNavigation} from '@/components/workspace-navigation';
@@ -151,21 +157,23 @@ const initial: Data = {
   assignments: [],
   events: [],
 };
-const navItems = [
-  { name: 'Overview', icon: LayoutDashboard },
-  { name: 'Employees', icon: Users },
-  { name: 'Asset inventory', icon: Laptop },
-  { name: 'Suppliers', icon: Boxes },
-  { name: 'Procurement', icon: Package },
-  { name: 'Temporary borrowing', icon: Package },
-  { name: 'Laptop arrangements', icon: Laptop },
-  { name: 'Onboarding', icon: UserPlus },
-  { name: 'Offboarding', icon: UserMinus },
-  { name: 'Kit templates', icon: Package },
-  { name: 'Account requests', icon: KeyRound },
-  { name: 'Forms & documents', icon: Package },
-  { name: 'Manage records', icon: Boxes },
-  { name: 'Resigned & clearance', icon: ShieldCheck },
+const navItems = [
+  { name: 'Overview', label: 'Overview', icon: LayoutDashboard },
+  { name: 'Employees', label: 'Employees', icon: Users },
+  { name: 'Asset inventory', label: 'Asset Inventory', icon: Laptop },
+  { name: 'Onboarding', label: 'Onboarding', icon: UserPlus },
+  { name: 'Offboarding', label: 'Offboarding', icon: UserMinus },
+  { name: 'Kit templates', label: 'Kit Templates', icon: Package },
+  { name: 'Account requests', label: 'Account Requests', icon: KeyRound },
+  { name: 'Laptop arrangements', label: 'Laptop Arrangement', icon: Laptop },
+  { name: 'Deployment & returns', label: 'Deployment and Returns', icon: Clock3 },
+  { name: 'Temporary borrowing', label: 'Temporary Borrowing', icon: Package },
+  { name: 'Forms & documents', label: 'Forms & Documents', icon: Package },
+  { name: 'Procurement', label: 'Procurement', icon: Package },
+  { name: 'Suppliers', label: 'Suppliers', icon: Boxes },
+  { name: 'Manage records', label: 'Manage Records', icon: Boxes },
+  { name: 'Resigned & clearance', label: 'Resigned & Clearance', icon: ShieldCheck },
+  { name: 'Audit reports', label: 'Audit Reports', icon: ShieldCheck },
 ];
 const today = () => new Date().toLocaleDateString('en-CA');
 const initials = (name: string) =>
@@ -181,21 +189,23 @@ function Choice({
   value,
   onChange,
   options,
-  label,
+  label,
+  expanded = false,
 }: {
   value: string;
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
-  label: string;
+  label: string;
+  expanded?: boolean;
 }) {
   return (
     <Select value={value} onValueChange={(v) => onChange(String(v))}>
-      <SelectTrigger aria-label={label} className="min-h-10 min-w-36 bg-white">
+      <SelectTrigger aria-label={label} className={expanded ? "asset-choice-trigger min-h-10 bg-card" : "min-h-10 min-w-36 bg-card"}>
         <SelectValue>
           {options.find((o) => o.value === value)?.label || label}
         </SelectValue>
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent alignItemWithTrigger={!expanded} align="start" className={expanded ? "asset-choice-options" : undefined}>
         {options.map((o) => (
           <SelectItem key={o.value} value={o.value}>
             {o.label}
@@ -306,6 +316,7 @@ export default function Page() {
   );
 }
 function Operations() {
+  const [lifecycleMode,setLifecycleMode]=useState('progress');
   const [inspected, setInspected] = useState<string | null>(null),
     [inventoryStatus, setInventoryStatus] = useState('All hardware states');
   const [data, setData] = useState<Data>(initial),
@@ -316,7 +327,7 @@ function Operations() {
     [busy, setBusy] = useState(false),
     [search, setSearch] = useState(''),
     [filter, setFilter] = useState('All statuses'),
-    [inventorySection, setInventorySection] = useState('All assets'),
+    [inventorySection, setInventorySection] = useState('Laptop'),
     [selected, setSelected] = useState<string | null>(null),
     [modal, setModal] = useState(''),
     [kind, setKind] = useState('Hardware'),
@@ -329,6 +340,8 @@ function Operations() {
     if (!response.ok) throw new Error(result.error);
     setData(result);
   }
+  useEffect(()=>{setLifecycleMode('progress')},[view]);
+  useEffect(() => { const id=new URLSearchParams(window.location.search).get('inspect'); if(id) setInspected(id); }, []);
   useEffect(() => {
     if (
       new URLSearchParams(window.location.search).has('form') ||
@@ -372,7 +385,7 @@ function Operations() {
     setView(name);
     setSearch('');
     setFilter('All statuses');
-    setInventorySection('All assets');
+    setInventorySection('Laptop');
     setInventoryStatus('All hardware states');
   }
   function openModal(name: string) {
@@ -427,7 +440,7 @@ function Operations() {
     (e) =>
       (view !== 'Onboarding' || e.status === 'Onboarding') &&
       (view !== 'Offboarding' ||
-        ['Offboarding', 'Offboarded'].includes(e.status)) &&
+        e.status === 'Offboarding') &&
       (filter === 'All statuses' || e.status === filter) &&
       `${e.name} ${e.email} ${e.code} ${e.department}`
         .toLowerCase()
@@ -471,14 +484,13 @@ function Operations() {
       sub: 'Current team members',
     },
     {
-      title: 'Hardware assigned',
-      count: data.assignments.filter(
-        (a) =>
-          !a.resolved_at &&
-          data.assets.find((s) => s.id === a.asset_id)?.kind === 'Hardware',
-      ).length,
-      icon: Laptop,
-      sub: 'Equipment in use',
+      title: 'Laptops assigned',
+      count: data.assets.filter((asset) =>
+        asset.kind === 'Hardware' && hardwareCategory(asset) === 'Laptop' &&
+        data.assignments.some((assignment) => assignment.asset_id === asset.id && !assignment.resolved_at)
+      ).length,
+      icon: Laptop,
+      sub: 'Laptops assigned to employees',
     },
     {
       title: 'Onboarding',
@@ -516,13 +528,14 @@ function Operations() {
   return (
     <SidebarProvider>
       <Sidebar>
-        <SidebarHeader>
+        <SidebarHeader>
+          <div className="anchored-sidebar-brand"><BrandLogo/><span>Asset Management</span></div>
           
           <div className="workspace">COMPANY WORKSPACE</div>
         </SidebarHeader>
         <SidebarContent>
           <WorkspaceNavigation>
-            {navItems.map(({ name, icon: Icon }) => (
+            {navItems.map(({ name, label, icon: Icon }) => (
               <button
                 key={name}
                 aria-current={view === name ? 'page' : undefined}
@@ -530,7 +543,7 @@ function Operations() {
                 onClick={() => navigate(name)}
               >
                 <Icon size={19} />
-                {name}
+                {label}
                 {['Onboarding', 'Offboarding'].includes(name) && (
                   <span className="ml-auto text-xs">
                     {name === 'Onboarding' ? onboards.length : offboards.length}
@@ -569,6 +582,8 @@ function Operations() {
             <p>
               {view === 'Overview'
                 ? 'Every employee. Every asset. Accounted for.'
+                : view === 'Audit reports' ? 'Export dated inventory, access and clearance records for review.'
+                : view === 'Deployment & returns' ? 'Review laptop deployment and return history, including records needing verification.'
                 : view === 'Suppliers' ? 'Supplier contacts and the services they provide.'
                 : view === 'Temporary borrowing' ? 'Reserve equipment, track due dates and keep signed borrowing forms.'
                 : view === 'Procurement' ? 'Purchase history, linked assets and invoice documents.'
@@ -587,15 +602,7 @@ function Operations() {
                             ? 'Get every new hire ready for their first day.'
                             : 'Recover equipment and close access with nothing left behind.'}
             </p>
-            {![
-              'Kit templates',
-              'Account requests',
-              'Forms & documents',
-              'Manage records',
-              'Resigned & clearance',
-              'Temporary borrowing',
-              'Suppliers', 'Procurement', 'Laptop arrangements',
-            ].includes(view) && (
+            {['Overview', 'Employees', 'Onboarding', 'Asset inventory'].includes(view) && (
               <button
                 className="primary"
                 disabled={loading}
@@ -640,8 +647,9 @@ function Operations() {
             </div>
           ) : (
             <>
-              {view === 'Overview' && <Borrowing summary onOpen={()=>setView('Temporary borrowing')} version={data.events[0]?.id}/>}
-              {view === 'Temporary borrowing' ? (<Borrowing employees={data.employees} assets={available.filter(a=>!readDetails(a).custodian?.trim())} refresh={refresh}/>) : view === 'Suppliers' || view === 'Procurement' ? (
+              
+              {['Onboarding','Offboarding'].includes(view)&&<div className="detail-actions" role="group" aria-label="Workflow view"><button className={lifecycleMode==='progress'?'primary':'secondary'} aria-pressed={lifecycleMode==='progress'} onClick={()=>setLifecycleMode('progress')}>In progress</button><button className={lifecycleMode==='history'?'primary':'secondary'} aria-pressed={lifecycleMode==='history'} onClick={()=>setLifecycleMode('history')}>Completed history</button></div>}
+              {['Onboarding','Offboarding'].includes(view)&&lifecycleMode==='history'?<LifecycleHistory key={view} kind={view} employees={data.employees} events={data.events} onEmployee={setSelected}/>:view === 'Audit reports' ? (<AuditReports/>) : view === 'Deployment & returns' ? (<MovementHistory expanded/>) : view === 'Temporary borrowing' ? (<div id="temporary-borrowing-tracker"><Borrowing employees={data.employees} assets={available.filter(a=>!readDetails(a).custodian?.trim())} refresh={refresh}/></div>) : view === 'Suppliers' || view === 'Procurement' ? (
                 <Purchasing key={view} view={view} assets={data.assets} onAsset={setInspected}/>
               ) : view === 'Laptop arrangements' ? (
                 <LaptopArrangements employees={data.employees} assets={data.assets} assignments={data.assignments} onEmployee={setSelected} onAsset={setInspected}/>
@@ -813,6 +821,7 @@ function Operations() {
                 </>
               ) : (
                 <>
+                  
                   {view === 'Asset inventory' && !loading && (
                     <HardwareDashboard
                       assets={data.assets}
@@ -864,15 +873,13 @@ function Operations() {
                           ])}
                         />}
                       </>
-                    ) : view === 'Employees' || view === 'Offboarding' ? (
+                    ) : view === 'Employees' ? (
                       <Choice
                         label="Employee status"
                         value={filter}
                         onChange={setFilter}
                         options={options(
-                          view === 'Offboarding'
-                            ? ['All statuses', 'Offboarding', 'Offboarded']
-                            : [
+                          [
                                 'All statuses',
                                 'Onboarding',
                                 'Active',
@@ -990,8 +997,7 @@ function Operations() {
                           search
                             ? 'Try another name, tag, or serial number.'
                             : 'Choose another section or status, or add an asset.',
-                          () => openModal('asset'),
-                          'Add asset',
+                          undefined,
                         )
                       )
                     ) : filteredEmployees.length ? (
@@ -1001,7 +1007,7 @@ function Operations() {
                             <TableHead>EMPLOYEE</TableHead>
                             <TableHead>DEPARTMENT</TableHead>
                             <TableHead>STATUS</TableHead>
-                            <TableHead>ASSIGNED</TableHead>
+                            <TableHead>CURRENTLY PROVISIONED</TableHead>
                             <TableHead>
                               {view === 'Offboarding'
                                 ? 'LAST WORKING DAY'
@@ -1036,10 +1042,7 @@ function Operations() {
                               </TableCell>
                               <TableCell>
                                 {
-                                  data.assignments.filter(
-                                    (a) =>
-                                      a.employee_id === e.id && !a.resolved_at,
-                                  ).length
+                                  provisionedItems(e.id,data.assets,data.assignments,data.accountRequests,data.tasks).filter(i=>i.active).length
                                 }{' '}
                                 items
                               </TableCell>
@@ -1074,12 +1077,8 @@ function Operations() {
                           : view === 'Offboarding'
                             ? 'Open an employee record to start an offboarding checklist.'
                             : 'Add an employee to begin provisioning their assets.',
-                        view === 'Offboarding'
-                          ? () => navigate('Employees')
-                          : () => openModal('employee'),
-                        view === 'Offboarding'
-                          ? 'Find employee'
-                          : 'Add employee',
+                        view === 'Offboarding' ? () => navigate('Employees') : undefined,
+                        'Find employee',
                       )
                     )}
                   </section>
@@ -1114,7 +1113,7 @@ function Operations() {
             </SheetDescription>
           </div>
           {employee && (
-            <div className="detail-body">
+            <div className="detail-body employee-profile-body"><div className="detail-actions"><EditEmployee key={employee.id} employee={employee} refresh={refresh}/></div>
               <div className="detail-meta">
                 <div>
                   <small>EMAIL</small>
@@ -1137,14 +1136,17 @@ function Operations() {
                   </div>
                 )}
               </div>
-              {['Offboarding', 'Offboarded'].includes(employee.status) && (
+              <Tabs key={employee.id+'-profile'} defaultValue="overview" className="employee-profile-tabs">
+<TabsList className="employee-profile-nav"><TabsTrigger value="overview">Provisioned items</TabsTrigger><TabsTrigger value="documents">Acknowledgements & forms</TabsTrigger><TabsTrigger value="access">Accounts & access</TabsTrigger><TabsTrigger value="kit">Onboarding kit</TabsTrigger><TabsTrigger value="borrowing">Borrowing</TabsTrigger><TabsTrigger value="movements">Deployment history</TabsTrigger></TabsList>
+<TabsContent value="overview">
+{['Offboarding', 'Offboarded'].includes(employee.status) && (
                 <DepartureRecords
                   employeeId={employee.id}
                   refresh={refresh}
                   version={data.events[0]?.id}
                 />
               )}
-              <Borrowing employeeId={employee.id} refresh={refresh} version={data.events[0]?.id}/>
+              
               <EmployeeProvisioned
                 key={employee.id}
                 employeeId={employee.id}
@@ -1152,8 +1154,9 @@ function Operations() {
                 assignments={data.assignments}
                 requests={data.accountRequests}
                 tasks={data.tasks}
-              />
-              <LaptopArrangements key={employee.id+'-laptop'} fixedEmployee={employee.id} employees={data.employees} assets={data.assets} assignments={data.assignments}/>
+              /><details className="profile-arrangement"><summary>Laptop arrangement · company, personal or gadget loan</summary><LaptopArrangements key={employee.id+'-laptop'} fixedEmployee={employee.id} employees={data.employees} assets={data.assets} assignments={data.assignments}/></details>
+              
+              
               {employee.status === 'Offboarding' && (
                 <div className="notice">
                   <strong>
@@ -1224,43 +1227,13 @@ function Operations() {
                   {error}
                 </div>
               )}
-              <Forms
-                fixedEmployee={employee.id}
-                forms={data.forms}
-                files={data.formFiles}
-                employees={data.employees}
-                assets={data.assets}
-                assignments={data.assignments}
-                tasks={data.tasks}
-                save={mutate}
-                busy={busy}
-                error={error}
-              />
-              <AccountRequests
-                fixedEmployee={employee.id}
-                requests={data.accountRequests}
-                employees={data.employees}
-                save={mutate}
-                busy={busy}
-                error={error}
-              />
-              <EmployeeKitPanel
-                accountRequests={data.accountRequests}
-                key={employee.id}
-                employee={employee}
-                kit={data.kits.find((k) => k.employee_id === employee.id)}
-                tasks={data.tasks}
-                templates={data.templates}
-                assets={data.assets}
-                assignments={data.assignments}
-                save={mutate}
-                busy={busy}
-                error={error}
-              />
+
+              
+              
               <Tabs defaultValue="assigned">
                 <TabsList className="w-full justify-start">
                   <TabsTrigger value="assigned" className="px-3">
-                    Assigned ({outstanding.length})
+                    Inventory assignments ({outstanding.length})
                   </TabsTrigger>
                   <TabsTrigger value="history" className="px-3">
                     History
@@ -1337,7 +1310,44 @@ function Operations() {
                     ))}
                 </TabsContent>
               </Tabs>
-            </div>
+            </TabsContent>
+<TabsContent value="documents"><Forms key={employee.id+'-forms'}
+                fixedEmployee={employee.id}
+                forms={data.forms}
+                files={data.formFiles}
+                employees={data.employees}
+                assets={data.assets}
+                assignments={data.assignments}
+                tasks={data.tasks}
+                save={mutate}
+                busy={busy}
+                error={error}
+              /></TabsContent>
+<TabsContent value="access"><AccountRequests
+                fixedEmployee={employee.id}
+                requests={data.accountRequests}
+                employees={data.employees}
+                save={mutate}
+                busy={busy}
+                error={error}
+              /></TabsContent>
+<TabsContent value="kit"><EmployeeKitPanel
+                accountRequests={data.accountRequests}
+                key={employee.id}
+                employee={employee}
+                kit={data.kits.find((k) => k.employee_id === employee.id)}
+                tasks={data.tasks}
+                templates={data.templates}
+                assets={data.assets}
+                assignments={data.assignments}
+                save={mutate}
+                busy={busy}
+                error={error}
+              /></TabsContent>
+<TabsContent value="borrowing"><Borrowing employeeId={employee.id} refresh={refresh} version={data.events[0]?.id}/></TabsContent>
+<TabsContent value="movements"><MovementHistory employeeId={employee.id}/></TabsContent>
+</Tabs>
+</div>
           )}
         </SheetContent>
       </Sheet>
@@ -1417,12 +1427,12 @@ function Operations() {
                       <label className="field full">
                         Available asset
                         <Choice
-                          label="Choose an asset"
+                          label="Choose an asset" expanded
                           value={assetId}
                           onChange={setAssetId}
-                          options={available.map((a) => ({
+                          options={[...available].sort((a, b) => a.tag.localeCompare(b.tag, undefined, { numeric: true })).map((a) => ({
                             value: a.id,
-                            label: `${a.name} · ${a.tag} (${a.seats - assignedCount(a.id)} available)`,
+                            label: `${a.tag} - ${a.name}${a.kind === 'Hardware' ? '' : ` (${a.seats - assignedCount(a.id)} available)`}`,
                           }))}
                         />
                       </label>

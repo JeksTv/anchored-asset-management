@@ -8,6 +8,8 @@ export type AssetDetails = {
   os?: string;
   specs?: string;
   location?: string;
+  room?: string;
+  responsible_person?: string;
   condition?: string;
   purchase_date?: string;
   supplier?: string;
@@ -33,6 +35,7 @@ export type AssetDetails = {
   sticker_tagging?: string;
 };
 export type InventoryAsset = {
+  is_test?: number;
   borrow_status?: string;
   borrow_employee_id?: string;
   id: string;
@@ -45,6 +48,7 @@ export type InventoryAsset = {
   details: string;
 };
 export type Maintenance = {
+  closure_outcome?: string;
   id: string;
   asset_id: string;
   type: string;
@@ -80,7 +84,9 @@ export const detailFields: [keyof AssetDetails, string, string][] = [
   ['ram', 'Memory (RAM)', 'text'],
   ['storage', 'Storage', 'text'],
   ['os', 'Operating system', 'text'],
-  ['location', 'Location', 'text'],
+  ['location', 'Office / site', 'text'],
+  ['room', 'Room / area', 'text'],
+  ['responsible_person', 'Responsible person / team (optional)', 'text'],
   ['purchase_date', 'Purchase date', 'date'],
   ['supplier', 'Supplier', 'text'],
   ['purchase_price', 'Purchase price', 'number'],

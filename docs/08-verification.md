@@ -43,3 +43,7 @@ Do not call the system production-ready until an operator completes `04-deployme
 ## Temporary borrowing — September 24, 2026
 
 Migration 0007 applied after local backup. Type checking and build passed. 18 service/security tests and 118 HTTP authorization/ownership checks passed, including borrowing conflicts, partial/damaged returns, clearance blocks and private signed-file access. See 16-temporary-borrowing.md for workflow and acceptance checks.
+
+## Test record cleanup — September 24, 2026
+
+Migration 0008 applied after a local database backup. Type checking and production build passed. Final suite: 23 service/security tests and 126 HTTP checks passed. Explicit test labels, linked-login cleanup, signed test departure document cleanup, real-employee asset protection, exact identifier confirmation, and role restrictions were verified on disposable databases. See 17-test-record-cleanup.md.

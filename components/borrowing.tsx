@@ -162,7 +162,8 @@ export function Borrowing({
   const pages = Math.max(1, Math.ceil(filtered.length / 8));
   const current = Math.min(page, pages);
   return (
-    <section className="panel borrowing-module">
+    <section className="panel borrowing-module">
+      {!employeeId && !assetId && ready && <p aria-label="Borrowing summary">{active.filter(r=>r.display_status==='Overdue').length} overdue · {active.filter(r=>r.display_status==='Due today').length} due today · {active.filter(r=>r.status==='Reserved').length} reservations</p>}
       <div className="section-head">
         <h2>Temporary borrowing</h2>
         {canEdit && !employeeId && !assetId && (

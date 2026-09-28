@@ -45,3 +45,7 @@ The later additive hardware import is documented in [Twenty-tab hardware migrati
 ## Limits and cleanup
 
 Some historical employee start dates may be missing. The existing form workflow requires complete employee information; IT should complete missing dates before submitting forms. Migration must not invent employment dates. Employee email addresses are not used as application login credentials. Imported records do not automatically create login accounts, Google accounts, or Microsoft accounts.
+
+## Laptop completion
+
+The initial 221 laptop records included 218 matching tracker tags and three separately entered assets. On September 24, 2026, an additive import included the remaining 114 tracker laptops. See [Laptop completion](18-laptop-completion.md) for reconciliation, status mapping and custody exceptions.

@@ -1,0 +1,58 @@
+/* Theme overrides load after the AnchorEd light theme. */
+.theme-toggle{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:8px 12px;border:1px solid var(--input);border-radius:8px;background:var(--card);color:var(--foreground);cursor:pointer;font-size:12px}
+.account-navigation{display:flex;align-items:center;gap:8px}.login-theme{position:absolute;top:18px;right:18px}.access-screen{position:relative;padding-top:80px}
+@media(min-width:768px){.topbar{padding-right:225px}}
+@media(max-width:480px){.account-navigation .theme-toggle span{display:none}}
+html.dark{color-scheme:dark;--anchored-navy:#e3e8ff;--anchored-navy-hover:#c9d4ff;--anchored-gold:#d7b773;--anchored-gold-ink:#e2c687;--background:#0e1424;--foreground:#e0e6f0;--card:#182134;--card-foreground:#e0e6f0;--popover:#1c2840;--popover-foreground:#e0e6f0;--primary:#d7b773;--primary-foreground:#10172b;--secondary:#26324a;--secondary-foreground:#e0e6f0;--muted:#222e44;--muted-foreground:#a9b7ca;--accent:#343126;--accent-foreground:#f1d49a;--border:#35425a;--input:#4a5971;--ring:#e2c687;--sidebar:#151e30;--sidebar-foreground:#d5deed;--sidebar-primary:#d7b773;--sidebar-primary-foreground:#10172b;--sidebar-accent:#343126;--sidebar-accent-foreground:#f1d49a;--sidebar-border:#35425a;--destructive:#ff9292}
+.dark :is(.panel,.stat,.workflow-card,.access-card,.purchasing-module,.topbar,.access-bar,.secondary,.inventory-section-stats button,.departure-documents>section,.field select,.access-table,.record-section){background:var(--card);color:var(--foreground);border-color:var(--border)}
+.dark :is(input,select,textarea){background:var(--background);color:var(--foreground);border-color:var(--input)}
+.dark :is(h1,h2,h3,strong,label,th,td){color:inherit}
+.dark :is(.primary,button.primary){background:#d7b773;color:#10172b;border-color:#d7b773}.dark .primary:hover:not(:disabled){background:#e7c98f;border-color:#e7c98f}
+.dark :is(.nav,.anchored-sidebar-brand>span,.row-link){color:#c9d5ef}.dark .nav:hover,.dark .secondary:hover{background:var(--secondary);color:var(--foreground)}
+.dark .nav.active,.dark .inventory-section-stats button[aria-pressed=true]{background:var(--accent);color:#f1d49a}
+.dark :is(.eyebrow,.inventory-section-stats span,.inventory-section-heading label,.topbar .private,small,.muted,.subtitle,.inventory-section-note){color:var(--muted-foreground)}
+.dark .access-screen{background:linear-gradient(145deg,#0e1424,#1c2439)}
+.dark .access-bar .account-menu-trigger{background:var(--card);color:var(--foreground);border-color:var(--border)}
+.dark .workspace-account-bar{background:transparent}
+.dark .anchored-logo{border-radius:6px;padding:6px;background:white}
+.dark .avatar,.dark .asset-icon{background:#293753;color:#d1ddfa}
+.dark :is(tr,td,th,.section-head,.purchasing-history,.anchored-sidebar-brand){border-color:var(--border)}
+.dark tr:hover{background:#222e44}
+.dark .success{background:#173e34;color:#aff0cd;border-color:#306653}.dark .error{color:#ffb5b5}
+@media print{html.dark{color-scheme:light} .theme-toggle{display:none}}
+
+.dark :is(.table-panel th,.service-summary>div,.employee-kit,.change-details>div,.welcome,.welcome-icon){background:var(--card);color:var(--foreground);border-color:var(--border)}
+.dark :is(p,.panel ol,.stat>div,.spec-grid dt,.service-summary span,.change-details,.footer-note){color:var(--muted-foreground)}
+.dark .notice{background:#393021;color:#f0cf91;border-color:#6b5934}.dark .error{background:#46282e;color:#ffb5b5}
+.dark .badge{background:#2a3850;color:#d0dced}.dark .badge.Active,.dark .badge.Available,.dark .badge.Ready{background:#193e34;color:#a4e8c4}.dark .badge.Onboarding{background:#263c5c;color:#b5d6ff}.dark .badge.Offboarding,.dark .badge.Maintenance,.dark .badge.Expired{background:#453722;color:#f3ce91}
+.dark .danger{background:#46282e;color:#ffb5b5;border-color:#76414b}
+
+/* Shared management tables own their surface instead of inheriting white. */
+.dark .access-table table{background:var(--card);color:var(--foreground)}
+.dark .access-table thead,.dark .access-table th{background:var(--secondary);color:var(--foreground)}
+.dark .access-table td{background:transparent;color:var(--foreground)}
+.dark .access-table tbody tr{background:var(--card)}
+.dark .access-table tbody tr:nth-child(even){background:#1b263b}
+.dark .access-table tbody tr:hover{background:#28364f}
+.dark .access-table :is(td,th){border-color:var(--border)}
+.dark .access-table button{background:var(--secondary);color:var(--foreground);border-color:var(--input)}
+.dark .access-table button:hover:not(:disabled){background:#354665;border-color:var(--anchored-gold)}
+.dark .access-table button:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.dark .access-table small{color:var(--muted-foreground)}
+
+/* Employee, hardware, form and purchasing surfaces share the theme palette. */
+.dark :is(.provisioned-panel,.form-list-row,.hardware-totals>div,.hardware-category,.purchasing-asset-picker){background:var(--card);color:var(--foreground);border-color:var(--border)}
+.dark :is(.provisioned-summary>div,.hardware-summary thead){background:var(--secondary);color:var(--foreground)}
+.dark :is(.provisioned-description>span,.provisioned-description small,.provisioned-state small,.provisioned-summary small,.hardware-totals span,.hardware-category dt,.hardware-category header span,.hardware-summary-heading label,.hardware-summary-note,.list-pagination,.list-count){color:var(--muted-foreground)}
+.dark .hardware-totals strong{color:var(--foreground)}
+.dark :is(.hardware-category,.hardware-summary) .hardware-available{color:#a4e8c4}
+.dark :is(.hardware-summary td,.hardware-summary th,.hardware-summary-note,.kit-task,.purchasing-asset-picker){border-color:var(--border)}
+.dark :is(.account-search,.search input,.field input,.field textarea,.access-card input,.access-create input,.access-create select,.access-table select,.purchasing-asset-picker>input){background:var(--background);color:var(--foreground);border-color:var(--input)}
+.dark input::placeholder,.dark textarea::placeholder{color:#9aaac1;opacity:1}
+.dark .badge.Submitted{background:#263c5c;color:#b5d6ff}.dark .badge.Approved{background:#453722;color:#f3ce91}
+.dark .list-pagination [aria-current=page]{background:var(--accent);color:var(--accent-foreground);border-color:var(--anchored-gold)}
+.dark .form-list-row:hover{background:var(--secondary)}
+.dark :is([data-slot=dialog-content],[data-slot=alert-dialog-content],[data-slot=sheet-content],[data-slot=select-content],[data-slot=popover-content],[data-slot=dropdown-menu-content]){background:var(--popover);color:var(--foreground);border-color:var(--border)}
+.dark [data-slot=select-trigger]{background:var(--card);color:var(--foreground);border-color:var(--input)}
+/* Signed/printable forms stay legible on paper regardless of screen theme. */
+@media print{.dark .form-dialog,.dark .print-document,.dark .print-document *{background:white!important;color:#111!important;border-color:#bbb!important}}

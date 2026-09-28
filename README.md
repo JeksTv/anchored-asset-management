@@ -52,9 +52,22 @@ pnpm build
 - [Suppliers, procurement invoices and laptop arrangements](docs/12-suppliers-procurement-laptops.md)
 - [Vercel deployment readiness and pending hosting decision](docs/13-vercel-readiness.md)
 - [Official AnchorEd branding](docs/14-branding.md)
+- [Responsive layout and device checks](docs/15-responsive-layout.md)
+- [Temporary borrowing, signed forms and returns](docs/16-temporary-borrowing.md)
+- [Cleaning up test employees and assets](docs/17-test-record-cleanup.md)
 
 This is a prepared company-server application, not a completed deployment to your company server. The existing hosted Site remains separate. Confirm the server OS, domain, TLS setup, backup destination, and access arrangements before production installation.
 
-- [Responsive layout and device checks](docs/15-responsive-layout.md)
+Laptop inventory completion and rerun instructions: [Laptop completion migration](docs/18-laptop-completion.md).
 
-- [Temporary borrowing, signed forms and returns](docs/16-temporary-borrowing.md)
+Hardware retirement workflow: [Asset retirement](docs/19-asset-retirement.md).
+
+Deployment and return history: [History import](docs/20-deployment-return-history.md).
+
+Employee accounts and lifecycle tracking: [Account register](docs/21-employee-account-register.md).
+
+Audit exports and verification: [Audit reports](docs/22-audit-reports.md).
+
+- [Physical asset verification and QR labels](docs/23-physical-verification.md)
+
+- [Employee lifecycle and next priorities](docs/24-employee-lifecycle.md)

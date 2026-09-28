@@ -92,10 +92,18 @@ try{
  async function createRecord(body){const r=await request('/api/workspace',a,body);const b=await r.json();assert.equal(r.status,200,JSON.stringify(b));checks++;return b.id}
  const emp=await createRecord({action:'employee',name:'TEST employee',code:'TEST-EMP',email:'testemp@example.test',department:'IT',role:'Tester',startDate:'2026-01-01'});
  await status('/api/records',a,{action:'editEmployee',id:emp,name:'TEST edited',code:'TEST-EMP',email:'testemp@example.test',department:'IT',role:'QA',start_date:'2026-02-01'},200);
- await status('/api/records',s,{action:'deleteEmployee',id:emp},200);
+ await status('/api/records?kind=employee&id='+emp,u,undefined,403);
+ await status('/api/records',u,{action:'markTestRecord',kind:'employee',id:emp,identifier:'TEST-EMP'},403);
+ await status('/api/records',s,{action:'markTestRecord',kind:'employee',id:emp,identifier:'wrong'},400);
+ await status('/api/records',s,{action:'markTestRecord',kind:'employee',id:emp,identifier:'TEST-EMP'},200);
+ const cleanupPreview=await (await request('/api/records?kind=employee&id='+emp,s)).json();assert.equal(cleanupPreview.canDelete,true);checks++;
+ await status('/api/records',s,{action:'deleteTestRecord',kind:'employee',id:emp,identifier:'TEST-EMP'},200);
  const unused=await createRecord({action:'asset',name:'TEST unused',tag:'TEST-UNUSED',kind:'Hardware'});
  await status('/api/workspace',a,{action:'editAsset',assetId:unused,name:'TEST edited asset',tag:'TEST-UNUSED',serial:'TEST-123',kind:'Hardware'},200);
  await status('/api/records',a,{action:'deleteAsset',id:unused},200);
+ const flagged=await createRecord({action:'asset',name:'Disposable asset',tag:'TEST-FLAGGED',kind:'Hardware',testRecord:true});
+ const flaggedPreview=await (await request('/api/records?kind=asset&id='+flagged,a)).json();assert.equal(flaggedPreview.canDelete,true);checks++;
+ await status('/api/records',a,{action:'deleteTestRecord',kind:'asset',id:flagged,identifier:'TEST-FLAGGED'},200);
  const issued=await createRecord({action:'asset',name:'TEST assigned laptop',tag:'TEST-ISSUED',kind:'Hardware'});
  const assignment=await createRecord({action:'assign',employeeId:'one',assetId:issued});
  await status('/api/records',a,{action:'deleteAsset',id:issued},409);
@@ -125,10 +133,32 @@ try{
  const u2=await login('user');assert.equal((await (await request('/api/me',u2)).json()).employee.id,'two');checks++;
  await status('/api/departures?document='+signed.id,u2,undefined,404);
  await status('/api/departures?employeeId=one',u2,undefined,403);
+
+ // Regression coverage for signed acknowledgement uploads and lifecycle history.
+ const uploadEmployee=await createRecord({action:'employee',name:'Upload QA',code:'UPLOAD-QA',email:'upload@example.test',department:'IT',role:'QA',startDate:'2026-01-01'});
+ async function uploadAcknowledgement(token,bytes='%PDF-1.4\n%%EOF',date='2026-01-02'){
+  const form=new FormData();form.set('employeeId',uploadEmployee);form.set('signed_date',date);form.set('file',new Blob([bytes],{type:'application/pdf'}),'acknowledgement.pdf');
+  return fetch(base+'/api/acknowledgement-uploads',{method:'POST',headers:{Cookie:token,Origin:process.env.APP_ORIGIN},body:form});
+ }
+ assert.equal((await uploadAcknowledgement(u2)).status,403);checks++;
+ assert.equal((await uploadAcknowledgement(a,'not a PDF')).status,400);checks++;
+ assert.equal((await uploadAcknowledgement(a,undefined,'2026-02-30')).status,400);checks++;
+ const uploaded=await uploadAcknowledgement(a);assert.equal(uploaded.status,200);const uploadId=(await uploaded.json()).id;checks++;
+ const uploadList=await (await request('/api/acknowledgement-uploads?employeeId='+uploadEmployee,a)).json();assert.equal(uploadList.rows.length,1);checks++;
+ const download=await request('/api/acknowledgement-uploads?id='+uploadId,a);assert.equal(await download.text(),'%PDF-1.4\n%%EOF');assert.equal(download.headers.get('x-content-type-options'),'nosniff');checks++;
+ await status('/api/acknowledgement-uploads?id='+uploadId,u2,undefined,403);
+ await status('/api/records',a,{action:'deleteEmployee',id:uploadEmployee},409);
+ const onboardingAsset=await createRecord({action:'asset',name:'Lifecycle QA laptop',tag:'LIFECYCLE-QA',kind:'Hardware'});
+ await createRecord({action:'assign',employeeId:uploadEmployee,assetId:onboardingAsset});
+ await status('/api/workspace',a,{action:'activate',employeeId:uploadEmployee},200);
+ const history=await (await request('/api/workspace',a)).json();
+ assert(history.events.some(e=>e.employee_id===uploadEmployee&&e.message.endsWith(' completed onboarding')));checks++;
+ assert(history.events.some(e=>e.employee_id==='one'&&e.message.endsWith(' completed offboarding')));checks++;
  await status('/api/users',s,{action:'delete',id:'super'},400);
  await status('/api/users',s,{action:'update',id:'admin',role:'admin',active:false},200);await status('/api/workspace',a,undefined,401);
  await status('/api/users',s,{action:'update',id:'super',role:'user',active:false},400);
  await status('/api/auth',s,{action:'logout'},200);await status('/api/users',s,undefined,401);
  console.log(`PASS: ${checks} HTTP authorization, ownership, account administration and session checks.`);
 }finally{server.kill();server.stdout.destroy();server.stderr.destroy();db.close()}
+
 

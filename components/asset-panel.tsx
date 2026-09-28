@@ -1,4 +1,6 @@
 'use client';
+import {AssetVerification} from './asset-verification';
+import {MovementHistory} from './movement-history';
 import {Borrowing} from './borrowing';
 import {AssetProcurement} from './purchasing';
 import { useState, type FormEvent } from 'react';
@@ -339,6 +341,9 @@ export function AssetPanel({
                 )}
               </div>
               <div className="detail-actions">
+                {asset.kind === 'Hardware' && ['Ready','Maintenance'].includes(asset.state) && (
+                  <button className="secondary" onClick={() => setModal('retireAsset')}>Retire asset</button>
+                )}
                 <button
                   className="secondary"
                   onClick={() => setModal('editAsset')}
@@ -379,7 +384,7 @@ export function AssetPanel({
                 </div>
               )}
               <Tabs defaultValue="details" key={asset.id}>
-                <TabsList className="w-full justify-start">
+                <TabsList className="employee-profile-nav">
                   <TabsTrigger value="details" className="px-3">
                     Details
                   </TabsTrigger>
@@ -389,9 +394,10 @@ export function AssetPanel({
                   <TabsTrigger value="history" className="px-3">
                     History
                   </TabsTrigger>
+                <TabsTrigger value="custody">Location & borrowing</TabsTrigger><TabsTrigger value="procurement">Purchase & warranty</TabsTrigger>{asset.kind==='Hardware'&&<TabsTrigger value="verification">Verification & QR</TabsTrigger>}
                 </TabsList>
                 <TabsContent value="details">
-                  <AssetProcurement assetId={asset.id}/><Borrowing assetId={asset.id} refresh={refresh}/>
+
                   <div className="record-section">
                     <h3>
                       <Laptop size={17} /> Specifications
@@ -422,83 +428,12 @@ export function AssetPanel({
                       <p className="whitespace-pre-wrap mt-4">{d.specs}</p>
                     )}
                   </div>
-                  <div className="record-section">
-                    <h3>
-                      <CalendarClock size={17} /> Purchase & warranty
-                    </h3>
-                    <dl className="spec-grid">
-                      {(
-                        [
-                          'purchase_date',
-                          'supplier',
-                          'invoice',
-                          'warranty_end',
-                          'next_service',
-                        ] as const
-                      ).map((key) => (
-                        <div key={key}>
-                          <dt>{detailFields.find((x) => x[0] === key)?.[1]}</dt>
-                          <dd>
-                            {d[key] || 'Not recorded'}
-                            {key === 'warranty_end' && d[key] && (
-                              <span
-                                className={
-                                  'badge ml-2 ' +
-                                  (d[key]! < localDate() ? 'Expired' : 'Active')
-                                }
-                              >
-                                {d[key]! < localDate() ? 'Expired' : 'Covered'}
-                              </span>
-                            )}
-                          </dd>
-                        </div>
-                      ))}
-                      <div>
-                        <dt>Purchase price</dt>
-                        <dd>
-                          {d.purchase_price !== undefined &&
-                          d.purchase_price !== ''
-                            ? `${d.currency || 'PHP'} ${Number(d.purchase_price).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
-                            : 'Not recorded'}
-                        </dd>
-                      </div>
-                    </dl>
-                  </div>
                   {d.notes && (
                     <div className="record-section">
                       <h3>Notes</h3>
                       <p className="whitespace-pre-wrap">{d.notes}</p>
                     </div>
                   )}
-                  <div className="record-section">
-                    <h3>Current custodian</h3>
-                    {history
-                      .filter((a) => !a.resolved_at)
-                      .map((a) => (
-                        <button
-                          className="row-link"
-                          key={a.id}
-                          onClick={() => onEmployee(a.employee_id)}
-                        >
-                          {employees.find((e) => e.id === a.employee_id)?.name}{' '}
-                          · Since {a.assigned_at.slice(0, 10)}
-                        </button>
-                      ))}
-                    {!history.some((a) => !a.resolved_at) &&
-                      (d.custodian ? (
-                        <p>
-                          {d.custodian}
-                          {d.location ? ` · ${d.location}` : ''}
-                          <br />
-                          <small>
-                            Imported source custody; employee match requires
-                            review.
-                          </small>
-                        </p>
-                      ) : (
-                        <p>No employee or location currently assigned.</p>
-                      ))}
-                  </div>
                 </TabsContent>
                 <TabsContent value="service">
                   {asset.kind !== 'Hardware' ? (
@@ -514,7 +449,7 @@ export function AssetPanel({
                         </div>
                         <div>
                           <strong>{closed.length}</strong>
-                          <span>Completed services</span>
+                          <span>Closed services</span>
                         </div>
                         <div>
                           <strong className="!text-base">
@@ -537,7 +472,7 @@ export function AssetPanel({
                                   (m.completed_date ? 'Active' : 'Maintenance')
                                 }
                               >
-                                {m.completed_date ? 'Completed' : 'In progress'}
+                                {m.closure_outcome === 'Retired' ? 'Closed — retired' : m.completed_date ? 'Completed' : 'In progress'}
                               </span>
                             </div>
                             <p className="whitespace-pre-wrap">{m.issue}</p>
@@ -553,7 +488,7 @@ export function AssetPanel({
                               <div>
                                 <dt>
                                   {m.completed_date
-                                    ? 'Completed'
+                                    ? (m.closure_outcome === 'Retired' ? 'Closed' : 'Completed')
                                     : 'Target date'}
                                 </dt>
                                 <dd>
@@ -575,7 +510,7 @@ export function AssetPanel({
                             {m.work_done && (
                               <div className="mt-4">
                                 <strong className="text-sm">
-                                  Work performed
+                                  {m.closure_outcome === 'Retired' ? 'Closure reason' : 'Work performed'}
                                 </strong>
                                 <p className="whitespace-pre-wrap">
                                   {m.work_done}
@@ -608,7 +543,7 @@ export function AssetPanel({
                     </>
                   )}
                 </TabsContent>
-                <TabsContent value="history">
+                <TabsContent value="history">{d.category?.trim().toLowerCase()==='laptop'&&<MovementHistory assetId={asset.id}/>}
                   <div className="record-section">
                     <h3>
                       <History size={17} /> Assignment history
@@ -666,6 +601,82 @@ export function AssetPanel({
                     )}
                   </div>
                 </TabsContent>
+<TabsContent value="custody">                  <div className="record-section">
+                    <h3>Location & responsibility</h3>
+                    <dl className="spec-grid"><div><dt>Office / site</dt><dd>{d.location||'Not recorded'}</dd></div><div><dt>Room / area</dt><dd>{d.room||'Not recorded'}</dd></div><div><dt>Responsible person / team</dt><dd>{d.responsible_person||'Not recorded'}</dd></div></dl>
+                    {d.custody_type==='Location'&&<p>Shared office equipment — deployed to this location, not an employee.</p>}
+                    {history
+                      .filter((a) => !a.resolved_at)
+                      .map((a) => (
+                        <button
+                          className="row-link"
+                          key={a.id}
+                          onClick={() => onEmployee(a.employee_id)}
+                        >
+                          {employees.find((e) => e.id === a.employee_id)?.name}{' '}
+                          · Since {a.assigned_at.slice(0, 10)}
+                        </button>
+                      ))}
+                    {!history.some((a) => !a.resolved_at) &&
+                      (d.custody_type==='Location' ? null : d.custodian ? (
+                        <p>
+                          {d.custodian}
+                          {d.location ? ` · ${d.location}` : ''}
+                          <br />
+                          <small>
+                            Imported source custody; employee match requires
+                            review.
+                          </small>
+                        </p>
+                      ) : (
+                        <p>No employee custodian currently assigned.</p>
+                      ))}
+                  </div>
+<Borrowing assetId={asset.id} refresh={refresh}/></TabsContent>
+<TabsContent value="procurement">                  <div className="record-section">
+                    <h3>
+                      <CalendarClock size={17} /> Purchase & warranty
+                    </h3>
+                    <dl className="spec-grid">
+                      {(
+                        [
+                          'purchase_date',
+                          'supplier',
+                          'invoice',
+                          'warranty_end',
+                          'next_service',
+                        ] as const
+                      ).map((key) => (
+                        <div key={key}>
+                          <dt>{detailFields.find((x) => x[0] === key)?.[1]}</dt>
+                          <dd>
+                            {d[key] || 'Not recorded'}
+                            {key === 'warranty_end' && d[key] && (
+                              <span
+                                className={
+                                  'badge ml-2 ' +
+                                  (d[key]! < localDate() ? 'Expired' : 'Active')
+                                }
+                              >
+                                {d[key]! < localDate() ? 'Expired' : 'Covered'}
+                              </span>
+                            )}
+                          </dd>
+                        </div>
+                      ))}
+                      <div>
+                        <dt>Purchase price</dt>
+                        <dd>
+                          {d.purchase_price !== undefined &&
+                          d.purchase_price !== ''
+                            ? `${d.currency || 'PHP'} ${Number(d.purchase_price).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                            : 'Not recorded'}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+<AssetProcurement assetId={asset.id}/></TabsContent>
+{asset.kind==='Hardware'&&<TabsContent value="verification"><AssetVerification assetId={asset.id}/></TabsContent>}
               </Tabs>
             </div>
           )}
@@ -679,14 +690,14 @@ export function AssetPanel({
       >
         <DialogContent className="!max-w-2xl !p-6 max-h-[90vh] overflow-auto">
           <DialogTitle className="text-xl">
-            {modal === 'editAsset'
+            {modal === 'retireAsset' ? 'Retire asset' : modal === 'editAsset'
               ? 'Edit asset details'
               : modal === 'maintenance'
                 ? 'Start maintenance'
                 : 'Complete maintenance'}
           </DialogTitle>
           <DialogDescription>
-            {modal === 'editAsset'
+            {modal === 'retireAsset' ? 'Close open maintenance as retired and remove this hardware from available inventory. Its history will be retained. Resolve any current custody first.' : modal === 'editAsset'
               ? 'Keep the hardware record current. Changes are retained in its history.'
               : modal === 'maintenance'
                 ? 'This hardware will be unavailable for new assignments until service is completed. Its current custodian stays linked.'
@@ -699,7 +710,17 @@ export function AssetPanel({
           )}
           <form onSubmit={submit} key={modal + serviceId}>
             <div className="form-grid">
-              {modal === 'editAsset' && asset ? (
+              {modal === 'retireAsset' ? (
+                <>
+                  <p className="field full">{asset?.tag} - {asset?.name}</p>
+                  <label className="field full">Retirement date
+                    <input name="retirement_date" type="date" required max={localDate()} defaultValue={localDate()} />
+                  </label>
+                  <label className="field full">Retirement reason
+                    <Textarea name="retirement_reason" required maxLength={4000} placeholder="e.g. Beyond repair or repair too costly" />
+                  </label>
+                </>
+              ) : modal === 'editAsset' && asset ? (
                 <AssetFields kind={asset.kind} asset={asset} />
               ) : modal === 'maintenance' ? (
                 <>
@@ -794,7 +815,7 @@ export function AssetPanel({
               <button className="primary" disabled={busy}>
                 {busy
                   ? 'Saving…'
-                  : modal === 'editAsset'
+                  : modal === 'retireAsset' ? 'Retire asset' : modal === 'editAsset'
                     ? 'Save changes'
                     : modal === 'maintenance'
                       ? 'Start maintenance'

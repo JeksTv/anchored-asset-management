@@ -1,10 +1,13 @@
+import {testCleanupPreview,markTestRecord,deleteTestRecord} from '@/server/test-records.mjs';
 import {randomUUID} from 'node:crypto';
 import {connection as db} from '@/server/database.mjs';
 import {audit,checkOrigin,failure,HttpError,requireRole} from '@/server/auth.mjs';
 import {textValue} from '@/lib/asset-service';
 
+export async function GET(request:Request){try{const actor=requireRole(request,['super_admin','admin']);const q=new URL(request.url).searchParams;return Response.json(testCleanupPreview(q.get('kind'),q.get('id'),actor),{headers:{'Cache-Control':'no-store'}})}catch(e){return failure(e)}}
 export async function POST(request:Request){try{
  checkOrigin(request);const actor=requireRole(request,['super_admin','admin']);const b=await request.json() as Record<string,unknown>;
+ if(['markTestRecord','deleteTestRecord'].includes(String(b.action))){const kind=textValue(b,'kind',true),id=textValue(b,'id',true),identifier=textValue(b,'identifier',true);return Response.json(b.action==='markTestRecord'?markTestRecord(kind,id,identifier,actor):deleteTestRecord(kind,id,identifier,actor),{headers:{'Cache-Control':'no-store'}})}
  const id=textValue(b,'id',true),now=new Date().toISOString();
  db.exec('BEGIN IMMEDIATE');try{
  if(b.action==='editEmployee'){
@@ -15,12 +18,12 @@ export async function POST(request:Request){try{
   if(start&&(!/^\d{4}-\d{2}-\d{2}$/.test(start)||!Number.isFinite(Date.parse(start))||new Date(start).toISOString().slice(0,10)!==start))throw new HttpError(400,'Enter a valid start date.');
   if(start&&e.end_date&&start>e.end_date)throw new HttpError(400,'Start date cannot follow the last working day.');
   db.prepare('UPDATE employees SET name=?,code=?,email=?,department=?,role=?,start_date=? WHERE id=?').run(name,code,email,department,role,start,id);
-  db.prepare('INSERT INTO events(id,employee_id,message,created_at) VALUES(?,?,?,?)').run(randomUUID(),id,'Employee details updated by '+actor.name,now);
+  db.prepare('INSERT INTO events(id,employee_id,message,created_at) VALUES(?,?,?,?)').run(randomUUID(),id,'Employee details updated by '+actor.name+(e.name!==name?' · Name changed from '+e.name+' to '+name:''),now);
   audit(actor.id,'employee_updated',id);
  }else if(b.action==='deleteEmployee'){
   const e=db.prepare('SELECT * FROM employees WHERE id=?').get(id);if(!e)throw new HttpError(404,'Employee not found.');
   if(['Offboarding','Offboarded'].includes(e.status))throw new HttpError(409,'Departing employee records must be retained.');
-  for(const table of ['borrowings','assignments','account_requests','employee_kits','kit_tasks','employee_forms','departure_documents','app_users','employee_laptop_arrangements'])if(db.prepare(`SELECT 1 FROM ${table} WHERE employee_id=? LIMIT 1`).get(id))throw new HttpError(409,'Employee has linked records. Keep the profile for history; remove only unused test employees.');
+  for(const table of ['borrowings','assignments','account_requests','employee_kits','kit_tasks','employee_forms','acknowledgement_uploads','departure_documents','app_users','employee_laptop_arrangements'])if(db.prepare(`SELECT 1 FROM ${table} WHERE employee_id=? LIMIT 1`).get(id))throw new HttpError(409,'Employee has linked records. Keep the profile for history; remove only unused test employees.');
   db.prepare('DELETE FROM events WHERE employee_id=?').run(id);db.prepare('DELETE FROM employees WHERE id=?').run(id);
   audit(actor.id,'employee_deleted:'+JSON.stringify({code:e.code,name:e.name}),id);
  }else if(b.action==='deleteAsset'){
