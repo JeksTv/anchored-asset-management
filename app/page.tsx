@@ -25,7 +25,7 @@ import type { EmployeeForm, FormFile } from '@/lib/form-types';
 import { EmployeeProvisioned } from '@/components/employee-provisioned';
 import { AccountRequests } from '@/components/account-requests';
 import type { AccountRequest } from '@/lib/account-types';
-import { KitTemplates, EmployeeKitPanel } from '@/components/kits';
+import { KitTemplates } from '@/components/kits';
 import type { KitTemplate, EmployeeKit, KitTask } from '@/lib/kit-types';
 import { AssetFields, AssetPanel } from '@/components/asset-panel';
 import {
@@ -172,8 +172,8 @@ const navItems = [
   { name: 'Asset inventory', label: 'Asset Inventory', icon: Laptop },
   { name: 'Onboarding', label: 'Onboarding', icon: UserPlus },
   { name: 'Offboarding', label: 'Offboarding', icon: UserMinus },
-  { name: 'Kit templates', label: 'Kit Templates', icon: Package },
-  { name: 'Account requests', label: 'Account Requests', icon: KeyRound },
+
+
   { name: 'Laptop arrangements', label: 'Laptop Arrangement', icon: Laptop },
   { name: 'Deployment & returns', label: 'Deployment and Returns', icon: Clock3 },
   { name: 'Temporary borrowing', label: 'Temporary Borrowing', icon: Package },
@@ -1158,7 +1158,7 @@ function Operations() {
                 )}
               </div>
               <Tabs key={employee.id+'-profile'} defaultValue="overview" className="employee-profile-tabs">
-<TabsList className="employee-profile-nav"><TabsTrigger value="overview">Provisioned items</TabsTrigger><TabsTrigger value="documents">Acknowledgements & forms</TabsTrigger><TabsTrigger value="access">Accounts & access</TabsTrigger><TabsTrigger value="kit">Onboarding kit</TabsTrigger><TabsTrigger value="borrowing">Borrowing</TabsTrigger><TabsTrigger value="movements">Deployment history</TabsTrigger></TabsList>
+<TabsList className="employee-profile-nav"><TabsTrigger value="overview">Provisioned items</TabsTrigger><TabsTrigger value="documents">Acknowledgements & forms</TabsTrigger><TabsTrigger value="access">Accounts & access</TabsTrigger><TabsTrigger value="borrowing">Borrowing</TabsTrigger><TabsTrigger value="movements">Deployment history</TabsTrigger></TabsList>
 <TabsContent value="overview">
 {['Offboarding', 'Offboarded'].includes(employee.status) && (
                 <DepartureRecords
@@ -1353,19 +1353,7 @@ function Operations() {
                 busy={busy}
                 error={error}
               /></TabsContent>
-<TabsContent value="kit"><EmployeeKitPanel
-                accountRequests={data.accountRequests}
-                key={employee.id}
-                employee={employee}
-                kit={data.kits.find((k) => k.employee_id === employee.id)}
-                tasks={data.tasks}
-                templates={data.templates}
-                assets={data.assets}
-                assignments={data.assignments}
-                save={mutate}
-                busy={busy}
-                error={error}
-              /></TabsContent>
+
 <TabsContent value="borrowing"><Borrowing employeeId={employee.id} refresh={refresh} version={data.events[0]?.id}/></TabsContent>
 <TabsContent value="movements"><MovementHistory employeeId={employee.id}/></TabsContent>
 </Tabs>
