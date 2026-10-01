@@ -1,0 +1,1 @@
+ALTER TABLE employees ADD COLUMN brand TEXT NOT NULL DEFAULT '';

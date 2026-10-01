@@ -1,3 +1,4 @@
+import {handoverRows} from './manager-handover.mjs';
 import {createHash,randomUUID} from 'node:crypto';
 import {connection as db} from './database.mjs';
 import {audit,HttpError} from './auth.mjs';
@@ -15,9 +16,10 @@ export function generateReport(type,actor){
  if(!['admin','super_admin'].includes(actor?.role))throw new HttpError(403,'Only IT administrators can generate audit reports.');
  if(!Object.hasOwn(queries,type))throw new HttpError(400,'Choose a valid report.');
  db.exec('BEGIN');let rows;
- try{rows=db.prepare(queries[type]).all();db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}
+ try{rows=db.prepare(queries[type]).all();if(type==='offboarding')rows=rows.map(row=>{const items=handoverRows(row.id);return {...row,manager_handover_items:items.length,manager_handover_pending:items.filter(r=>r.changed||!r.review||r.review.decision==='Transfer'&&!r.review.completed_at).length}});db.exec('COMMIT')}catch(e){db.exec('ROLLBACK');throw e}
  const payload={report_id:randomUUID(),report:type,generated_at:new Date().toISOString(),generated_by:actor.username||actor.id,scope:'Current database snapshot; all records in this report, including test records where indicated. Not a historical as-of reconstruction.',row_count:rows.length,rows};
  const sha256=createHash('sha256').update(JSON.stringify(payload)).digest('hex');
  audit(actor.id,'audit_report_generated:'+type+':'+payload.report_id+':'+sha256,null);
  return {...payload,sha256,verification:'SHA-256 of UTF-8 JSON.stringify(payload), excluding sha256 and verification. This detects file changes; it is not a digital signature or proof of completeness.'};
 }
+

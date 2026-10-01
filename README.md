@@ -71,3 +71,9 @@ Audit exports and verification: [Audit reports](docs/22-audit-reports.md).
 - [Physical asset verification and QR labels](docs/23-physical-verification.md)
 
 - [Employee lifecycle and next priorities](docs/24-employee-lifecycle.md)
+
+- [Employee employment types and HR source](docs/28-employee-employment-types.md)
+
+- [Employee brands](docs/29-employee-brands.md)
+
+Manager account-handover clearance: see [workflow and deployment notes](docs/30-manager-handover-clearance.md).

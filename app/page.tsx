@@ -1,4 +1,10 @@
 'use client';
+import {matchesLaptopUsage} from '@/lib/laptop-usage';
+import {BrandLaptopSummary} from '@/components/brand-laptop-summary';
+import employeeBrands from '@/lib/employee-brands.json';
+import {CancelLifecycle} from '@/components/cancel-lifecycle';
+import {EmployeeBrandField} from '@/components/employee-brand-field';
+import {EmploymentTypeField} from '@/components/employment-type-field';
 import {LifecycleHistory} from '@/components/lifecycle-history';
 import {EditEmployee} from '@/components/edit-employee';
 import {provisionedItems} from '@/lib/provisioned-items';
@@ -101,7 +107,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-type Employee = {
+type Employee = {
+  brand?: string; employment_type?: string; external_company?:string; internal_sponsor?:string;
   id: string;
   code: string;
   name: string;
@@ -122,7 +129,8 @@ type Assignment = {
   resolved_at: string | null;
   resolution: string | null;
 };
-type Data = {
+type Data = {
+ arrangements: {employee_id:string;loan_status:string;personal_use:string}[];
   forms: EmployeeForm[];
   formFiles: FormFile[];
   formLinks: { id: string; form_id: string; asset_id: string }[];
@@ -142,7 +150,8 @@ type Data = {
     created_at: string;
   }[];
 };
-const initial: Data = {
+const initial: Data = {
+ arrangements: [],
   forms: [],
   formFiles: [],
   formLinks: [],
@@ -316,6 +325,9 @@ export default function Page() {
   );
 }
 function Operations() {
+  const [laptopUsage,setLaptopUsage]=useState('All');
+  const [personnelFilter,setPersonnelFilter]=useState('Internal personnel');
+  const [employeeBrand,setEmployeeBrand]=useState('All brands');
   const [lifecycleMode,setLifecycleMode]=useState('progress');
   const [inspected, setInspected] = useState<string | null>(null),
     [inventoryStatus, setInventoryStatus] = useState('All hardware states');
@@ -382,7 +394,9 @@ function Operations() {
     }
   }
   function navigate(name: string) {
-    setView(name);
+    setView(name);
+    setLaptopUsage('All');
+    if(name === 'Employees') setPersonnelFilter('Internal personnel');
     setSearch('');
     setFilter('All statuses');
     setInventorySection('Laptop');
@@ -436,16 +450,19 @@ function Operations() {
       !outstanding.some((x) => x.asset_id === a.id),
   );
   const selectedAsset = data.assets.find((a) => a.id === assetId);
-  const filteredEmployees = data.employees.filter(
+  const scopedEmployees = data.employees.filter(
     (e) =>
       (view !== 'Onboarding' || e.status === 'Onboarding') &&
       (view !== 'Offboarding' ||
         e.status === 'Offboarding') &&
+      (view !== 'Employees' || personnelFilter === 'All personnel' || (personnelFilter === 'External personnel' ? e.employment_type === 'External personnel' : e.employment_type !== 'External personnel')) &&
+      (view !== 'Employees' || employeeBrand === 'All brands' || (e.brand || 'Not recorded') === employeeBrand) &&
       (filter === 'All statuses' || e.status === filter) &&
       `${e.name} ${e.email} ${e.code} ${e.department}`
         .toLowerCase()
         .includes(search.toLowerCase()),
   );
+  const filteredEmployees = scopedEmployees.filter(e => view !== 'Employees' || matchesLaptopUsage(e.id,laptopUsage,data.assets,data.assignments,data.arrangements||[]));
   const assignedAssetIds = new Set(data.assignments.filter((a) => !a.resolved_at).map((a) => a.asset_id));
   const filteredAssets = data.assets.filter(
     (a) =>
@@ -472,16 +489,16 @@ function Operations() {
     pagedEmployees = filteredEmployees.slice(pageStart, pageStart + pageSize);
   useEffect(
     () => setListPage(1),
-    [view, search, filter, inventorySection, inventoryStatus],
+    [view, search, filter, inventorySection, inventoryStatus, employeeBrand, personnelFilter, laptopUsage],
   );
   const onboards = data.employees.filter((e) => e.status === 'Onboarding'),
     offboards = data.employees.filter((e) => e.status === 'Offboarding');
   const stats = [
     {
       title: 'Total employees',
-      count: data.employees.filter((e) => e.status !== 'Offboarded').length,
+      count: data.employees.filter((e) => e.status !== 'Offboarded' && e.employment_type !== 'External personnel').length,
       icon: Users,
-      sub: 'Current team members',
+      sub: 'Internal employees; excludes offboarded',
     },
     {
       title: 'Laptops assigned',
@@ -490,7 +507,7 @@ function Operations() {
         data.assignments.some((assignment) => assignment.asset_id === asset.id && !assignment.resolved_at)
       ).length,
       icon: Laptop,
-      sub: 'Laptops assigned to employees',
+      sub: 'Assigned to internal and external personnel',
     },
     {
       title: 'Onboarding',
@@ -694,7 +711,7 @@ function Operations() {
                 />
               ) : view === 'Overview' ? (
                 <>
-                  <div className="stats">
+                  <div className="stats personnel-overview-stats">
                     {stats.map(({ title, count, icon: Icon, sub }) => (
                       <div className="stat" key={title}>
                         <div>
@@ -822,6 +839,8 @@ function Operations() {
               ) : (
                 <>
                   
+                  
+                  {view === 'Employees' && !loading && employeeBrand !== 'All brands' && <BrandLaptopSummary brand={employeeBrand} employees={scopedEmployees} assets={data.assets} assignments={data.assignments} arrangements={data.arrangements||[]} selected={laptopUsage} onSelect={setLaptopUsage}/>}
                   {view === 'Asset inventory' && !loading && (
                     <HardwareDashboard
                       assets={data.assets}
@@ -874,7 +893,8 @@ function Operations() {
                         />}
                       </>
                     ) : view === 'Employees' ? (
-                      <Choice
+                      <> <Choice label="Personnel" value={personnelFilter} onChange={setPersonnelFilter} options={options(['All personnel', 'Internal personnel', 'External personnel'])}/> <Choice label="Brand" value={employeeBrand} onChange={(brand)=>{setEmployeeBrand(brand);setLaptopUsage('All')}} options={options(['All brands', ...employeeBrands, 'Not recorded'])}/>
+<Choice
                         label="Employee status"
                         value={filter}
                         onChange={setFilter}
@@ -888,7 +908,8 @@ function Operations() {
                               ],
                         )}
                       />
-                    ) : null}
+                    </>
+) : null}
                   </div>
                   <section className="panel table-panel">
                     {view === 'Asset inventory' ? (
@@ -1006,7 +1027,7 @@ function Operations() {
                           <TableRow>
                             <TableHead>EMPLOYEE</TableHead>
                             <TableHead>DEPARTMENT</TableHead>
-                            <TableHead>STATUS</TableHead>
+                            <TableHead>BRAND</TableHead><TableHead>EMPLOYMENT TYPE</TableHead><TableHead>STATUS</TableHead>
                             <TableHead>CURRENTLY PROVISIONED</TableHead>
                             <TableHead>
                               {view === 'Offboarding'
@@ -1035,7 +1056,7 @@ function Operations() {
                                   {e.role}
                                 </small>
                               </TableCell>
-                              <TableCell>
+                              <TableCell>{e.brand || 'Not recorded'}</TableCell><TableCell>{e.employment_type || 'Not recorded'}{e.external_company&&<small>{e.external_company}</small>}</TableCell><TableCell>
                                 <span className={'badge ' + e.status}>
                                   {e.status}
                                 </span>
@@ -1126,7 +1147,7 @@ function Operations() {
                   </span>
                 </div>
                 <div>
-                  <small>START DATE</small>
+                  <small>BRAND</small>{employee.brand || 'Not recorded'}</div><div><small>EMPLOYMENT TYPE</small>{employee.employment_type || 'Not recorded'}{employee.external_company&&<p>Company: {employee.external_company}<br/>Internal sponsor: {employee.internal_sponsor}</p>}</div><div><small>START DATE</small>
                   {employee.start_date || 'Unknown — not supplied'}
                 </div>
                 {employee.end_date && (
@@ -1197,6 +1218,7 @@ function Operations() {
                     </button>
                   </>
                 )}
+                <CancelLifecycle employee={employee} refresh={refresh}/>
                 {employee.status === 'Onboarding' && (
                   <button
                     className="secondary"
@@ -1391,7 +1413,7 @@ function Operations() {
                     ['name', 'Full name', 'text', 'e.g. Alex Santos'],
                     ['code', 'Employee ID', 'text', 'e.g. EMP-001'],
                     ['email', 'Work email', 'email', 'alex@company.com'],
-                    ['department', 'Department', 'text', 'e.g. Engineering'],
+                    
                     ['role', 'Job title', 'text', 'e.g. Software Engineer'],
                     ['startDate', 'Start date', 'date', ''],
                   ].map(([name, label, type, placeholder]) => (
@@ -1406,7 +1428,7 @@ function Operations() {
                       />
                     </label>
                   ))}
-                </>
+                <EmployeeBrandField/><EmploymentTypeField/></>
               ) : modal === 'asset' ? (
                 <>
                   <label className="field full">

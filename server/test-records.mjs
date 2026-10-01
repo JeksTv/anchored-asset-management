@@ -47,6 +47,7 @@ export function testCleanupPreview(kind, id, actor) {
   const counts = countMap(kind === 'employee' ? employeeQueries : assetQueries, id);
   const reasons = [];
   if (kind === 'employee') {
+      if(db.prepare('SELECT 1 FROM manager_handovers WHERE employee_id=? OR recipient_id=?').get(id,id)) reasons.push('Manager handover evidence references this employee and must be retained.');
     if (one("SELECT 1 FROM app_users WHERE employee_id=? AND role!='user'", id)) reasons.push('An Admin or Super Admin login is linked to this employee.');
     if (actor.role !== 'super_admin' && counts.logins) reasons.push('Only a Super Admin can delete a test employee with a linked login.');
     if (one("SELECT 1 FROM borrowing_items i JOIN borrowings b ON b.id=i.borrowing_id WHERE b.employee_id=? AND b.status IN ('Reserved','Borrowed')", id)) reasons.push('Return or cancel active borrowing first.');

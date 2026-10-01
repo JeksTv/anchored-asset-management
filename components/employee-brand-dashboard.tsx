@@ -1,0 +1,6 @@
+'use client';
+import brands from '@/lib/employee-brands.json';
+export function EmployeeBrandDashboard({employees,selected,onSelect}:{employees:{brand?:string;status:string}[];selected:string;onSelect:(brand:string)=>void}){
+ const groups=['All brands',...brands,'Not recorded'];
+ return <section className="inventory-section-overview" aria-label="Employees by brand"><div className="inventory-section-heading"><div><h2>Employees by brand</h2><p>Select a brand to view its employees.</p></div></div><div className="inventory-section-stats employee-brand-stats">{groups.map(brand=>{const rows=employees.filter(e=>brand==='All brands'||(e.brand||'Not recorded')===brand);return <button key={brand} aria-pressed={selected===brand} onClick={()=>onSelect(brand)}><span>{brand}</span><strong>{rows.length}</strong><small>{rows.filter(e=>e.status==='Active').length} active · {rows.filter(e=>e.status==='Onboarding').length} onboarding</small><small>{rows.filter(e=>e.status==='Offboarding').length} offboarding · {rows.filter(e=>e.status==='Offboarded').length} offboarded</small></button>})}</div><p className="inventory-section-note">Counts include all employee records, including offboarded employees, and are independent of search and status filters. Selected: {selected}.</p></section>;
+}

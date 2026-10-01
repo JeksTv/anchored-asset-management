@@ -90,8 +90,26 @@ try{
  await status('/api/departures',u,undefined,403);
  await status('/api/departures','',undefined,401);
  async function createRecord(body){const r=await request('/api/workspace',a,body);const b=await r.json();assert.equal(r.status,200,JSON.stringify(b));checks++;return b.id}
- const emp=await createRecord({action:'employee',name:'TEST employee',code:'TEST-EMP',email:'testemp@example.test',department:'IT',role:'Tester',startDate:'2026-01-01'});
+ const emp=await createRecord({action:'employee',name:'TEST employee',code:'TEST-EMP',email:'testemp@example.test',department:'IT',role:'Tester',startDate:'2026-01-01',employment_type:'Probationary'});
  await status('/api/records',a,{action:'editEmployee',id:emp,name:'TEST edited',code:'TEST-EMP',email:'testemp@example.test',department:'IT',role:'QA',start_date:'2026-02-01'},200);
+
+ // HR employment type is separate from the employee workflow status.
+ assert.equal(db.prepare('SELECT employment_type FROM employees WHERE id=?').get(emp).employment_type,'Probationary');checks++;
+ const employeeEdit={action:'editEmployee',id:emp,name:'TEST edited',code:'TEST-EMP',email:'testemp@example.test',department:'IT',role:'QA',start_date:'2026-02-01'};
+ await status('/api/records',a,{...employeeEdit,employment_type:'Consultant'},200);
+ assert.equal(db.prepare('SELECT employment_type FROM employees WHERE id=?').get(emp).employment_type,'Consultant');checks++;
+ await status('/api/records',a,employeeEdit,200);
+ assert.equal(db.prepare('SELECT employment_type FROM employees WHERE id=?').get(emp).employment_type,'Consultant');checks++;
+ assert.equal(db.prepare('SELECT status FROM employees WHERE id=?').get(emp).status,'Onboarding');checks++;
+ await status('/api/records',a,{...employeeEdit,employment_type:'Invalid type'},400);
+ await status('/api/workspace',a,{action:'employee',name:'Invalid employment type',code:'INVALID-TYPE',email:'invalidtype@example.test',department:'IT',role:'QA',startDate:'2026-01-01',employment_type:'Invalid type'},400);
+
+ await status('/api/records',a,{...employeeEdit,brand:'AnchorEd'},200);
+ assert.equal(db.prepare('SELECT brand FROM employees WHERE id=?').get(emp).brand,'AnchorEd');checks++;
+ await status('/api/records',a,employeeEdit,200);
+ assert.equal(db.prepare('SELECT brand FROM employees WHERE id=?').get(emp).brand,'AnchorEd');checks++;
+ await status('/api/records',a,{...employeeEdit,brand:'Invalid brand'},400);
+ await status('/api/workspace',a,{action:'employee',name:'Invalid brand',code:'INVALID-BRAND',email:'invalidbrand@example.test',department:'IT',role:'QA',startDate:'2026-01-01',brand:'Invalid brand'},400);
  await status('/api/records?kind=employee&id='+emp,u,undefined,403);
  await status('/api/records',u,{action:'markTestRecord',kind:'employee',id:emp,identifier:'TEST-EMP'},403);
  await status('/api/records',s,{action:'markTestRecord',kind:'employee',id:emp,identifier:'wrong'},400);
